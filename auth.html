@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gadget Hub Developer Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: two panels. Left is a burgundy brand panel with a slowly turning phone outline, right is the form.
+   Stacks to one column on phones. */
+:root {
+  --ink: #07080c;
+  --panel: #10141c;
+  --panel-2: #181e2a;
+  --line: #2a3345;
+  --text: #f1f3f8;
+  --mute: #9aa4b8;
+  --accent: #ff8aa8;
+  --bad: #ff7a7a;
+  --f-display: "Archivo", "Arial Black", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--ink); }
+body { margin: 0; min-height: 100vh; background: var(--ink); color: var(--text); font: 400 16px/1.5 var(--f-body); }
+.page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+
+.side { position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 28px max(28px, env(safe-area-inset-left, 0px)); background: radial-gradient(60% 50% at 50% 55%, rgba(255,255,255,.2), transparent 70%), linear-gradient(160deg, #8a2442, #2a0812); }
+.brand { display: inline-flex; align-items: center; gap: 10px; font: 900 22px/1 var(--f-display); letter-spacing: -0.03em; color: #fff; text-decoration: none; }
+.side h2 { margin: 0; font: 900 clamp(36px, 4.6vw, 64px)/0.97 var(--f-display); letter-spacing: -0.04em; max-width: 11ch; position: relative; z-index: 2; }
+.side p { margin: 14px 0 0; max-width: 36ch; color: rgba(255,255,255,.8); position: relative; z-index: 2; }
+.ghost { position: absolute; right: -40px; bottom: -70px; width: 230px; height: 470px; border-radius: 52px; border: 3px solid rgba(255,255,255,.35); transform: rotate(14deg); animation: sway 9s ease-in-out infinite; }
+.ghost::before { content: ""; position: absolute; top: 14px; left: 50%; width: 80px; height: 24px; margin-left: -40px; border-radius: 20px; background: rgba(255,255,255,.35); }
+.ghost::after { content: ""; position: absolute; top: 60px; left: 24px; width: 90px; height: 90px; border-radius: 26px; border: 3px solid rgba(255,255,255,.3); }
+@keyframes sway { 0%, 100% { transform: rotate(14deg) translateY(0); } 50% { transform: rotate(8deg) translateY(-14px); } }
+
+.main { display: grid; place-items: center; padding: 28px max(18px, env(safe-area-inset-right, 0px)); }
+.box { width: 100%; max-width: 420px; }
+.eyebrow { font: 500 12px/1.4 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+h1 { margin: 8px 0 18px; font: 900 40px/1 var(--f-display); letter-spacing: -0.035em; }
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); margin-bottom: 22px; }
+.tab { padding: 12px; border: 0; border-radius: 10px; background: transparent; color: var(--mute); font: 600 14px/1 var(--f-body); cursor: pointer; transition: background .25s, color .25s; }
+.tab[aria-selected="true"] { background: var(--text); color: var(--ink); }
+form { display: grid; gap: 14px; }
+label { display: grid; gap: 7px; font: 500 12px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+.field { position: relative; }
+input { width: 100%; padding: 14px 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--panel); color: var(--text); font: 400 16px/1.2 var(--f-body); letter-spacing: 0; text-transform: none; }
+input::placeholder { color: #667088; }
+input:focus-visible { outline: 2.5px solid #fff; outline-offset: 2px; border-color: transparent; }
+.eye { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 8px 10px; border: 0; background: transparent; color: var(--mute); font: 600 12px/1 var(--f-body); cursor: pointer; border-radius: 8px; }
+.eye:hover { color: var(--text); }
+.hint { font: 400 13px/1.4 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--mute); }
+.err { margin: 0; padding: 11px 13px; border-radius: 12px; background: #ff7a7a1f; border: 1px solid #ff7a7a66; color: #ffb4b4; font-size: 14px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 15px 20px; border-radius: 999px; border: 0; background: var(--text); color: var(--ink); font: 700 15px/1 var(--f-body); cursor: pointer; text-decoration: none; transition: transform .2s, opacity .2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn:disabled { opacity: .6; cursor: progress; transform: none; }
+.btn:focus-visible, .tab:focus-visible, .eye:focus-visible, a:focus-visible { outline: 2.5px solid #fff; outline-offset: 3px; }
+.foot { margin-top: 22px; color: var(--mute); font-size: 14px; }
+.foot a { color: var(--text); }
+.warn { margin-top: 22px; padding: 12px 14px; border-radius: 12px; background: #f0b84a1a; border: 1px solid #f0b84a55; color: #f3d28c; font-size: 13px; line-height: 1.45; }
+
+@media (max-width: 820px) {
+  .page { grid-template-columns: minmax(0, 1fr); }
+  .side { min-height: 0; padding-block: 22px 26px; }
+  .side h2 { font-size: 38px; }
+  .ghost { width: 130px; height: 270px; right: -20px; bottom: -40px; border-radius: 34px; }
+  .ghost::after { width: 52px; height: 52px; top: 40px; left: 14px; border-radius: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .ghost { animation: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <aside class="side">
+    <a class="brand" href="index.html">
+      <svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="10" y="6" width="10" height="18" rx="3" fill="currentColor"/></svg>
+      Gadget Hub
+    </a>
+    <div>
+      <h2>Developer area</h2>
+      <p>Change prices, photos and stock for every iPhone on the shop page.</p>
+    </div>
+    <div class="ghost" aria-hidden="true"></div>
+  </aside>
+
+  <main class="main">
+    <div class="box">
+      <div class="eyebrow">Developers only</div>
+      <h1 id="title">Log in</h1>
+
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" id="tabLogin" aria-selected="true" type="button">Log in</button>
+        <button class="tab" role="tab" id="tabReg" aria-selected="false" type="button">Register</button>
+      </div>
+
+      <form id="fLogin" novalidate>
+        <label for="lEmail">Email
+          <input id="lEmail" type="email" autocomplete="username" placeholder="you@example.com" required>
+        </label>
+        <label for="lPass">Password
+          <span class="field">
+            <input id="lPass" type="password" autocomplete="current-password" placeholder="Your password" required>
+            <button class="eye" type="button" data-for="lPass">Show</button>
+          </span>
+        </label>
+        <p class="err" id="lErr" role="alert" hidden></p>
+        <button class="btn" type="submit" id="lBtn">Log in</button>
+      </form>
+
+      <form id="fReg" novalidate hidden>
+        <label for="rName">Name
+          <input id="rName" type="text" autocomplete="name" placeholder="Your full name" required>
+        </label>
+        <label for="rEmail">Email
+          <input id="rEmail" type="email" autocomplete="username" placeholder="you@example.com" required>
+        </label>
+        <label for="rPass">Password
+          <span class="field">
+            <input id="rPass" type="password" autocomplete="new-password" placeholder="At least 8 characters" required>
+            <button class="eye" type="button" data-for="rPass">Show</button>
+          </span>
+        </label>
+        <label for="rConf">Confirm password
+          <input id="rConf" type="password" autocomplete="new-password" placeholder="Type it again" required>
+        </label>
+        <label for="rCode">Developer access code
+          <input id="rCode" type="text" autocomplete="off" placeholder="Ask the owner for this code" required>
+          <span class="hint">Only people with this code can create an account.</span>
+        </label>
+        <p class="err" id="rErr" role="alert" hidden></p>
+        <button class="btn" type="submit" id="rBtn">Create account</button>
+      </form>
+
+      <p class="foot"><a href="models.html">Back to the shop</a></p>
+      <p class="warn">Demo login. Accounts and edits are saved only in this browser, so this keeps casual visitors out but is not bank-grade security. A real server login is the next step before you go live.</p>
+    </div>
+  </main>
+</div>
+
+<script src="store.js"></script>
+<script>
+(function () {
+  var GH = window.GH;
+  var $ = function (id) { return document.getElementById(id); };
+  if (GH.currentUser()) { location.replace("admin.html"); return; }
+
+  function mode(m) {
+    var reg = m === "register";
+    $("fLogin").hidden = reg; $("fReg").hidden = !reg;
+    $("tabLogin").setAttribute("aria-selected", String(!reg));
+    $("tabReg").setAttribute("aria-selected", String(reg));
+    $("title").textContent = reg ? "Create account" : "Log in";
+    try { history.replaceState(null, "", "#" + (reg ? "register" : "login")); } catch (e) {}
+  }
+  $("tabLogin").addEventListener("click", function () { mode("login"); });
+  $("tabReg").addEventListener("click", function () { mode("register"); });
+  mode(location.hash === "#register" ? "register" : "login");
+
+  Array.prototype.forEach.call(document.querySelectorAll(".eye"), function (b) {
+    b.addEventListener("click", function () {
+      var i = $(b.getAttribute("data-for")), show = i.type === "password";
+      i.type = show ? "text" : "password"; b.textContent = show ? "Hide" : "Show";
+    });
+  });
+
+  function showErr(id, msg) { var e = $(id); e.textContent = msg; e.hidden = !msg; }
+  function busy(btn, on, label) { btn.disabled = on; btn.textContent = on ? "Please wait" : label; }
+
+  $("fLogin").addEventListener("submit", function (ev) {
+    ev.preventDefault(); showErr("lErr", "");
+    var email = $("lEmail").value, pw = $("lPass").value;
+    if (!email || !pw) { showErr("lErr", "Enter your email and password."); return; }
+    busy($("lBtn"), true, "Log in");
+    GH.login(email, pw).then(function (r) {
+      if (r.ok) { location.href = "admin.html"; return; }
+      busy($("lBtn"), false, "Log in"); showErr("lErr", r.error);
+    });
+  });
+
+  $("fReg").addEventListener("submit", function (ev) {
+    ev.preventDefault(); showErr("rErr", "");
+    busy($("rBtn"), true, "Create account");
+    GH.register({ name: $("rName").value, email: $("rEmail").value, password: $("rPass").value, confirm: $("rConf").value, code: $("rCode").value }).then(function (r) {
+      if (r.ok) { location.href = "admin.html"; return; }
+      busy($("rBtn"), false, "Create account"); showErr("rErr", r.error);
+    });
+  });
+})();
+</script>
+</body>
+</html>

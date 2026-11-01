@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gadget Hub Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: working console. Slim header, a row of four stock figures, a toolbar, one wide inventory table,
+   then two small panels for shop settings and developer accounts. */
+:root {
+  --ink: #07080c;
+  --panel: #10141c;
+  --panel-2: #181e2a;
+  --line: #242c3c;
+  --text: #f1f3f8;
+  --mute: #9aa4b8;
+  --ok: #5ad18a;
+  --warn: #f0b84a;
+  --bad: #ff7a7a;
+  --f-display: "Archivo", "Arial Black", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { background: var(--ink); }
+body { margin: 0; background: var(--ink); color: var(--text); font: 400 15px/1.5 var(--f-body); min-height: 100vh; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 16px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 10px; font: 900 21px/1 var(--f-display); letter-spacing: -0.03em; text-decoration: none; color: inherit; }
+.who { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.who span { color: var(--mute); font-size: 14px; }
+.who b { color: var(--text); font-weight: 600; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: 999px; border: 1.5px solid #3a4558; background: transparent; color: var(--text); font: 600 13px/1 var(--f-body); cursor: pointer; text-decoration: none; transition: background .2s, border-color .2s, transform .2s; white-space: nowrap; }
+.btn:hover { background: #ffffff14; border-color: #6a778f; }
+.btn.solid { background: var(--text); border-color: var(--text); color: var(--ink); }
+.btn.solid:hover { background: #fff; transform: translateY(-1px); }
+.btn.danger { border-color: #ff7a7a88; color: #ffb4b4; }
+.btn.danger:hover { background: #ff7a7a22; }
+.btn.small { padding: 8px 12px; font-size: 12px; }
+.btn:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, .sold:focus-visible { outline: 2.5px solid #fff; outline-offset: 2px; }
+
+.title { padding-block: 26px 16px; }
+.eyebrow { font: 500 12px/1.4 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+h1 { margin: 8px 0 0; font: 900 clamp(34px, 5vw, 56px)/1 var(--f-display); letter-spacing: -0.04em; }
+.banner { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #f0b84a1a; border: 1px solid #f0b84a55; color: #f3d28c; font-size: 13px; }
+
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-block: 8px 18px; }
+.stat { padding: 14px 16px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); min-width: 0; }
+.stat small { display: block; font: 500 11px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-bottom: 10px; }
+.stat b { font: 900 26px/1 var(--f-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-bottom: 14px; }
+.tools .grow { flex: 1 1 220px; min-width: 0; }
+input[type=text], input[type=search], input[type=number], select, textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); color: var(--text); font: 400 15px/1.2 var(--f-body); }
+textarea { font: 400 12px/1.5 var(--f-mono); resize: vertical; }
+input[type=color] { width: 100%; height: 42px; padding: 3px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--panel); cursor: pointer; }
+select { width: auto; }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--panel); }
+table { width: 100%; border-collapse: collapse; min-width: 860px; }
+th { text-align: left; padding: 12px 14px; font: 500 11px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+tr:last-child td { border-bottom: 0; }
+tr.is-sold td { opacity: .55; }
+tr.is-sold td:last-child, tr.is-sold td:nth-last-child(2) { opacity: 1; }
+.pic { width: 44px; height: 56px; border-radius: 10px; display: grid; place-items: center; overflow: hidden; background: var(--panel-2); }
+.pic img { width: 100%; height: 100%; object-fit: contain; }
+.pic i { width: 22px; height: 22px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255,255,255,.3); }
+.pn { font: 800 16px/1.2 var(--f-display); letter-spacing: -0.01em; }
+.ps { color: var(--mute); font: 500 12px/1.4 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; }
+.pin { width: 118px; padding: 9px 10px; font-variant-numeric: tabular-nums; }
+.num { font-variant-numeric: tabular-nums; }
+.sold { display: inline-flex; align-items: center; gap: 7px; padding: 8px 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--panel-2); color: var(--text); font: 600 12px/1 var(--f-body); cursor: pointer; }
+.sold::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.sold.off::before { background: var(--bad); }
+.acts { display: flex; gap: 8px; justify-content: flex-end; align-items: center; white-space: nowrap; }
+.empty { padding: 44px 16px; text-align: center; color: var(--mute); }
+
+.panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding-block: 24px 60px; }
+.panel { padding: 18px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); min-width: 0; }
+.panel h2 { margin: 0 0 4px; font: 800 20px/1.2 var(--f-display); letter-spacing: -0.02em; }
+.panel p { margin: 0 0 14px; color: var(--mute); font-size: 14px; }
+.row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.row > .grow { flex: 1 1 200px; min-width: 0; }
+.ulist { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.ulist li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--panel-2); min-width: 0; }
+.ulist .u { min-width: 0; }
+.ulist .u b { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.ulist .u span { color: var(--mute); font-size: 13px; overflow-wrap: anywhere; }
+.role { font: 500 10px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; padding: 5px 8px; border-radius: 999px; background: #ffffff18; margin-left: 8px; }
+
+label { display: grid; gap: 7px; font: 500 11px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+
+/* dialogs */
+dialog { width: min(560px, calc(100vw - 24px)); max-height: calc(100vh - 24px); overflow: auto; padding: 0; border: 1px solid #3a4558; border-radius: 20px; background: var(--panel); color: var(--text); }
+dialog::backdrop { background: rgba(0,0,0,.7); }
+.dhead { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px 6px; }
+.dhead h2 { margin: 0; font: 900 24px/1 var(--f-display); letter-spacing: -0.03em; }
+.dbody { padding: 12px 20px 8px; display: grid; gap: 14px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dfoot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 20px; flex-wrap: wrap; }
+.photo { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 14px; align-items: center; }
+.photo .pv { width: 84px; height: 108px; border-radius: 14px; border: 1.5px dashed var(--line); display: grid; place-items: center; overflow: hidden; background: var(--panel-2); color: var(--mute); font-size: 11px; text-align: center; }
+.photo .pv img { width: 100%; height: 100%; object-fit: contain; }
+.photo input[type=file] { font-size: 13px; color: var(--mute); width: 100%; }
+.err { margin: 0; padding: 10px 12px; border-radius: 10px; background: #ff7a7a1f; border: 1px solid #ff7a7a66; color: #ffb4b4; font-size: 14px; }
+.check { display: flex; align-items: center; gap: 10px; font: 500 14px/1 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--text); cursor: pointer; }
+.check input { width: 18px; height: 18px; accent-color: #fff; margin: 0; }
+
+.toast { position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 24px); opacity: 0; pointer-events: none; padding: 12px 18px; border-radius: 999px; background: var(--text); color: var(--ink); font: 600 14px/1.2 var(--f-body); transition: opacity .25s, transform .25s; z-index: 50; max-width: calc(100vw - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+.toast.bad { background: var(--bad); }
+
+@media (max-width: 860px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .panels { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .two { grid-template-columns: minmax(0, 1fr); } .photo { grid-template-columns: 70px minmax(0, 1fr); } .photo .pv { width: 70px; height: 92px; } }
+@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+</style>
+</head>
+<body hidden>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="models.html">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="10" y="6" width="10" height="18" rx="3" fill="currentColor"/></svg>
+      Gadget Hub
+    </a>
+    <div class="who">
+      <span>Signed in as <b id="meName"></b></span>
+      <a class="btn small" href="models.html">View shop</a>
+      <button class="btn small" id="logout" type="button">Log out</button>
+    </div>
+  </header>
+
+  <div class="title">
+    <div class="eyebrow">Developer area</div>
+    <h1>Inventory</h1>
+    <p class="banner" id="banner">Your changes are saved in this browser only. To show them to every visitor, press <b>Publish</b>, replace <code>inventory.js</code> with the file you get, and upload the site again.</p>
+  </div>
+
+  <section class="stats" aria-label="Stock summary">
+    <div class="stat"><small>Listed</small><b id="sTotal">0</b></div>
+    <div class="stat"><small>Available</small><b id="sAvail">0</b></div>
+    <div class="stat"><small>Sold</small><b id="sSold">0</b></div>
+    <div class="stat"><small>Stock value</small><b id="sValue">0</b></div>
+  </section>
+
+  <div class="tools">
+    <div class="grow"><input type="search" id="q" placeholder="Search model, colour or storage" aria-label="Search phones"></div>
+    <select id="fs" aria-label="Show"><option value="all">All phones</option><option value="avail">Available</option><option value="sold">Sold</option></select>
+    <button class="btn solid" id="add" type="button">Add phone</button>
+    <button class="btn" id="publish" type="button">Publish</button>
+    <button class="btn danger" id="reset" type="button">Undo my edits</button>
+  </div>
+
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Photo</th><th>Phone</th><th>Battery</th><th>Grade</th><th>Price (₹)</th><th>Status</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty" id="none" hidden>No phones match. Press Add phone to list one.</div>
+  </div>
+
+  <div class="panels">
+    <section class="panel">
+      <h2>Shop settings</h2>
+      <p>The WhatsApp number that the Enquire buttons open.</p>
+      <div class="row">
+        <label class="grow" for="wa">WhatsApp number
+          <input type="text" id="wa" inputmode="numeric" placeholder="919876543210">
+        </label>
+        <button class="btn solid" id="saveWa" type="button">Save</button>
+      </div>
+      <p style="margin:10px 0 0;font-size:13px">Use country code and number with no spaces or plus sign. Example for India: 919876543210</p>
+    </section>
+    <section class="panel">
+      <h2>Developer accounts</h2>
+      <p>People who can open this page. Only the owner can remove someone.</p>
+      <ul class="ulist" id="users"></ul>
+    </section>
+  </div>
+</div>
+
+<!-- add / edit phone -->
+<dialog id="dlg" aria-labelledby="dTitle">
+  <form id="form" novalidate>
+    <div class="dhead"><h2 id="dTitle">Add phone</h2><button class="btn small" type="button" id="dX">Close</button></div>
+    <div class="dbody">
+      <label for="fModel">Model
+        <input type="text" id="fModel" list="modelList" placeholder="iPhone 17 Pro Max" autocomplete="off">
+        <datalist id="modelList"></datalist>
+      </label>
+      <div class="two">
+        <label for="fStore">Storage
+          <input type="text" id="fStore" list="storeList" placeholder="256 GB" autocomplete="off">
+          <datalist id="storeList"><option value="64 GB"><option value="128 GB"><option value="256 GB"><option value="512 GB"><option value="1 TB"></datalist>
+        </label>
+        <label for="fColor">Colour name
+          <input type="text" id="fColor" placeholder="Burgundy" autocomplete="off">
+        </label>
+      </div>
+      <div class="two">
+        <label for="fHex">Phone colour
+          <input type="color" id="fHex" value="#6d1f35">
+        </label>
+        <label for="fBatt">Battery health (%)
+          <input type="number" id="fBatt" min="50" max="100" step="1" placeholder="92">
+        </label>
+      </div>
+      <div class="two">
+        <label for="fGrade">Condition
+          <select id="fGrade" style="width:100%"><option value="A">Grade A, like new</option><option value="B">Grade B, light marks</option><option value="C">Grade C, visible wear</option></select>
+        </label>
+        <label for="fPrice">Price (₹)
+          <input type="number" id="fPrice" min="0" step="500" placeholder="64000">
+        </label>
+      </div>
+      <div class="photo">
+        <div class="pv" id="pv">No photo</div>
+        <div>
+          <label for="fPhoto">Photo (PNG with clear background looks best)
+            <input type="file" id="fPhoto" accept="image/*">
+          </label>
+          <button class="btn small" type="button" id="rmPhoto" style="margin-top:10px" hidden>Remove photo</button>
+        </div>
+      </div>
+      <label class="check" for="fSold"><input type="checkbox" id="fSold"> Mark as sold</label>
+      <p class="err" id="fErr" role="alert" hidden></p>
+    </div>
+    <div class="dfoot"><button class="btn" type="button" id="dCancel">Cancel</button><button class="btn solid" type="submit">Save phone</button></div>
+  </form>
+</dialog>
+
+<!-- publish -->
+<dialog id="pub" aria-labelledby="pTitle">
+  <div class="dhead"><h2 id="pTitle">Publish stock</h2><button class="btn small" type="button" id="pX">Close</button></div>
+  <div class="dbody">
+    <p style="margin:0;color:var(--mute)">1. Download this file (or copy the text). 2. Replace <code>inventory.js</code> in your website folder with it. 3. Upload the site again. Every visitor will then see these phones.</p>
+    <textarea id="pText" rows="10" readonly aria-label="inventory.js contents"></textarea>
+  </div>
+  <div class="dfoot"><button class="btn" type="button" id="pCopy">Copy text</button><button class="btn solid" type="button" id="pDl">Download inventory.js</button></div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="inventory.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  var GH = window.GH;
+  var me = GH.currentUser();
+  if (!me) { location.replace("auth.html"); return; }
+  document.body.hidden = false;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var inr = new Intl.NumberFormat("en-IN");
+  var INV = GH.getInventory();
+  var confirming = null, editing = null, photoData = null, toastT = null;
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function toast(msg, bad) {
+    var t = $("toast"); t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+    clearTimeout(toastT); toastT = setTimeout(function () { t.className = "toast" + (bad ? " bad" : ""); }, 2600);
+  }
+  function commit(okMsg) {
+    if (GH.saveInventory(INV)) { if (okMsg) toast(okMsg); return true; }
+    toast("Could not save. Browser storage is full, try smaller photos.", true); return false;
+  }
+  function newId() { return "p" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36); }
+
+  $("meName").textContent = me.name;
+  $("logout").addEventListener("click", function () { GH.logout(); location.href = "auth.html"; });
+
+  /* ---------- table ---------- */
+  function stats() {
+    var avail = INV.filter(function (x) { return !x.sold; });
+    $("sTotal").textContent = INV.length;
+    $("sAvail").textContent = avail.length;
+    $("sSold").textContent = INV.length - avail.length;
+    $("sValue").textContent = "₹" + inr.format(avail.reduce(function (a, x) { return a + (Number(x.price) || 0); }, 0));
+  }
+  function visible() {
+    var q = $("q").value.trim().toLowerCase(), f = $("fs").value;
+    return INV.filter(function (x) {
+      if (f === "avail" && x.sold) return false;
+      if (f === "sold" && !x.sold) return false;
+      return !q || (x.model + " " + x.color + " " + x.storage).toLowerCase().indexOf(q) >= 0;
+    });
+  }
+  function render() {
+    stats();
+    var list = visible();
+    $("none").hidden = list.length > 0;
+    $("rows").innerHTML = list.map(function (x) {
+      var pic = x.photo ? '<img src="' + x.photo + '" alt="">' : '<i style="background:' + esc(x.hex) + '"></i>';
+      var acts = confirming === x.id
+        ? '<span class="ps">Delete?</span><button class="btn small danger" data-act="delyes" data-id="' + x.id + '">Yes</button><button class="btn small" data-act="delno">No</button>'
+        : '<button class="btn small" data-act="edit" data-id="' + x.id + '">Edit</button><button class="btn small danger" data-act="del" data-id="' + x.id + '">Delete</button>';
+      return '<tr class="' + (x.sold ? "is-sold" : "") + '">' +
+        '<td><div class="pic">' + pic + "</div></td>" +
+        '<td><div class="pn">' + esc(x.model) + '</div><div class="ps">' + esc(x.storage) + " · " + esc(x.color) + "</div></td>" +
+        '<td class="num">' + esc(x.battery) + "%</td>" +
+        "<td>" + esc(x.grade) + "</td>" +
+        '<td><input class="pin" type="number" min="0" step="500" value="' + esc(x.price) + '" data-act="price" data-id="' + x.id + '" aria-label="Price for ' + esc(x.model) + " " + esc(x.color) + '"></td>' +
+        '<td><button class="sold ' + (x.sold ? "off" : "") + '" data-act="sold" data-id="' + x.id + '">' + (x.sold ? "Sold" : "Available") + "</button></td>" +
+        '<td><div class="acts">' + acts + "</div></td></tr>";
+    }).join("");
+  }
+  function byId(id) { return INV.filter(function (x) { return x.id === id; })[0]; }
+
+  $("rows").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-act]"); if (!b) return;
+    var act = b.getAttribute("data-act"), id = b.getAttribute("data-id"), it = id && byId(id);
+    if (act === "edit") openForm(it);
+    else if (act === "del") { confirming = id; render(); }
+    else if (act === "delno") { confirming = null; render(); }
+    else if (act === "delyes") { INV = INV.filter(function (x) { return x.id !== id; }); confirming = null; commit("Phone deleted"); render(); }
+    else if (act === "sold") { it.sold = !it.sold; if (commit(it.sold ? "Marked as sold" : "Marked as available")) render(); }
+  });
+  $("rows").addEventListener("change", function (e) {
+    var el = e.target; if (el.getAttribute("data-act") !== "price") return;
+    var it = byId(el.getAttribute("data-id")), v = Math.round(Number(el.value));
+    if (!it || !isFinite(v) || v < 0) { toast("Enter a valid price.", true); render(); return; }
+    it.price = v; if (commit("Price updated")) stats();
+  });
+  $("q").addEventListener("input", render);
+  $("fs").addEventListener("change", render);
+
+  /* ---------- add / edit form ---------- */
+  function fillModelList() {
+    var seen = {}, out = [];
+    Object.keys(GH.MODELS).concat(INV.map(function (x) { return x.model; })).forEach(function (m) { if (!seen[m]) { seen[m] = 1; out.push(m); } });
+    $("modelList").innerHTML = out.map(function (m) { return '<option value="' + esc(m) + '">'; }).join("");
+  }
+  function showPhoto() {
+    $("pv").innerHTML = photoData ? '<img src="' + photoData + '" alt="Phone photo preview">' : "No photo";
+    $("rmPhoto").hidden = !photoData;
+  }
+  function openForm(it) {
+    editing = it || null; photoData = it && it.photo ? it.photo : null;
+    fillModelList();
+    $("dTitle").textContent = it ? "Edit phone" : "Add phone";
+    $("fModel").value = it ? it.model : "";
+    $("fStore").value = it ? it.storage : "";
+    $("fColor").value = it ? it.color : "";
+    $("fHex").value = it ? it.hex : "#6d1f35";
+    $("fBatt").value = it ? it.battery : "";
+    $("fGrade").value = it ? it.grade : "A";
+    $("fPrice").value = it ? it.price : "";
+    $("fSold").checked = it ? !!it.sold : false;
+    $("fPhoto").value = ""; $("fErr").hidden = true; showPhoto();
+    $("dlg").showModal();
+  }
+  $("add").addEventListener("click", function () { openForm(null); });
+  function closeForm() { $("dlg").close(); }
+  $("dX").addEventListener("click", closeForm);
+  $("dCancel").addEventListener("click", closeForm);
+  $("rmPhoto").addEventListener("click", function () { photoData = null; $("fPhoto").value = ""; showPhoto(); });
+
+  function resize(file, max) {
+    return new Promise(function (res, rej) {
+      var r = new FileReader();
+      r.onload = function () {
+        var im = new Image();
+        im.onload = function () {
+          var s = Math.min(1, max / Math.max(im.width, im.height)), c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s));
+          c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+          var out = c.toDataURL("image/webp", 0.86);
+          if (out.indexOf("data:image/webp") !== 0) out = c.toDataURL("image/png");
+          res(out);
+        };
+        im.onerror = rej; im.src = r.result;
+      };
+      r.onerror = rej; r.readAsDataURL(file);
+    });
+  }
+  $("fPhoto").addEventListener("change", function () {
+    var f = this.files && this.files[0]; if (!f) return;
+    if (f.type.indexOf("image/") !== 0) { $("fErr").textContent = "Choose an image file."; $("fErr").hidden = false; return; }
+    resize(f, 900).then(function (d) { photoData = d; $("fErr").hidden = true; showPhoto(); }, function () { $("fErr").textContent = "That image could not be read. Try another file."; $("fErr").hidden = false; });
+  });
+
+  $("form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var model = $("fModel").value.trim(), store = $("fStore").value.trim(), color = $("fColor").value.trim();
+    var batt = Math.round(Number($("fBatt").value)), price = Math.round(Number($("fPrice").value));
+    var err = "";
+    if (!model) err = "Enter the model name.";
+    else if (!store) err = "Enter the storage, like 256 GB.";
+    else if (!color) err = "Enter the colour name.";
+    else if (!isFinite(batt) || batt < 50 || batt > 100) err = "Battery health must be between 50 and 100.";
+    else if (!isFinite(price) || price <= 0) err = "Enter the price in rupees.";
+    if (err) { $("fErr").textContent = err; $("fErr").hidden = false; return; }
+    var rec = { id: editing ? editing.id : newId(), model: model, storage: store, color: color, hex: $("fHex").value, battery: batt, grade: $("fGrade").value, price: price, sold: $("fSold").checked };
+    if (photoData) rec.photo = photoData;
+    var prev = INV.slice();
+    if (editing) INV = INV.map(function (x) { return x.id === editing.id ? rec : x; });
+    else INV.unshift(rec);
+    if (!commit(editing ? "Phone updated" : "Phone added")) { INV = prev; return; }
+    closeForm(); render();
+  });
+
+  /* ---------- publish / reset ---------- */
+  $("publish").addEventListener("click", function () { $("pText").value = GH.exportJs(); $("pub").showModal(); });
+  $("pX").addEventListener("click", function () { $("pub").close(); });
+  $("pCopy").addEventListener("click", function () {
+    var t = $("pText");
+    function fallback() { t.select(); toast("Text selected. Press Ctrl+C to copy."); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t.value).then(function () { toast("Copied"); }, fallback); else fallback();
+  });
+  $("pDl").addEventListener("click", function () {
+    try {
+      var blob = new Blob([$("pText").value], { type: "text/javascript" }), a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "inventory.js"; document.body.appendChild(a); a.click(); a.remove();
+      toast("inventory.js downloaded");
+    } catch (x) { toast("Download not available here. Use Copy text instead.", true); }
+  });
+  var resetArmed = false;
+  $("reset").addEventListener("click", function () {
+    if (!resetArmed) { resetArmed = true; this.textContent = "Press again to confirm"; var b = this; setTimeout(function () { resetArmed = false; b.textContent = "Undo my edits"; }, 3500); return; }
+    resetArmed = false; this.textContent = "Undo my edits";
+    GH.resetInventory(); INV = GH.getInventory(); loadSettings(); render(); toast("Back to the published stock");
+  });
+
+  /* ---------- settings + accounts ---------- */
+  function loadSettings() { $("wa").value = GH.config().whatsapp || ""; }
+  $("saveWa").addEventListener("click", function () {
+    var v = $("wa").value.replace(/[\s+\-]/g, "");
+    if (!/^\d{10,15}$/.test(v)) { toast("Enter digits only, with country code. Example: 919876543210", true); return; }
+    var c = GH.config(); c.whatsapp = v;
+    if (GH.saveConfig(c)) { GH.saveInventory(INV); toast("WhatsApp number saved"); } else toast("Could not save.", true);
+  });
+  function renderUsers() {
+    var list = GH.listUsers();
+    $("users").innerHTML = list.map(function (u) {
+      var rm = me.role === "owner" && u.email !== me.email ? '<button class="btn small danger" data-rm="' + esc(u.email) + '">Remove</button>' : "";
+      return '<li><div class="u"><b>' + esc(u.name) + '<span class="role">' + esc(u.role) + "</span></b><span>" + esc(u.email) + "</span></div>" + rm + "</li>";
+    }).join("");
+  }
+  $("users").addEventListener("click", function (e) {
+    var b = e.target.closest("[data-rm]"); if (!b) return;
+    if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Sure?"; return; }
+    if (GH.removeUser(b.getAttribute("data-rm"))) { toast("Account removed"); renderUsers(); }
+  });
+
+  loadSettings(); renderUsers(); render();
+})();
+</script>
+</body>
+</html>

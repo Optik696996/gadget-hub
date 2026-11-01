@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gadget Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one full-bleed colour stage. Giant outlined model name sits behind a big 3D phone.
+   Every model change spins the phone and wipes the whole page into that phone's colour.
+   Copy and the model picker sit along the bottom. */
+:root {
+  --ink: #07080c;
+  --fg-rgb: 255, 255, 255;
+  --bg1: #4a3a78;
+  --bg2: #150f2a;
+  --accent: #c7a8ff;
+  --f-display: "Archivo", "Arial Black", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ink); color: rgb(var(--fg-rgb)); font: 400 16px/1.5 var(--f-body); }
+
+/* ---------- intro curtain ---------- */
+.intro { position: fixed; inset: 0; z-index: 100; background: var(--ink); display: grid; place-items: center; pointer-events: none; animation: introOut 2.4s cubic-bezier(.7,0,.2,1) forwards; }
+.intro span { display: inline-block; font: 900 clamp(34px, 8vw, 84px)/1 var(--f-display); letter-spacing: -0.03em; color: #fff; animation: letterIn .7s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 55ms + 150ms); }
+.intro .sp { width: .3em; }
+@keyframes letterIn { from { transform: translateY(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes introOut { 0%, 74% { transform: none; visibility: visible; } 99% { transform: translateY(-101%); visibility: visible; } 100% { transform: translateY(-101%); visibility: hidden; } }
+
+/* ---------- hero ---------- */
+.hero { position: relative; isolation: isolate; overflow: hidden; min-height: calc(100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: grid; }
+.bgA, .bgB { position: absolute; inset: 0; z-index: -2; }
+.bgB { z-index: -1; clip-path: circle(0% at 50% 46%); }
+.inner {
+  display: grid; grid-template-rows: auto minmax(440px, 1fr) auto;
+  max-width: 1280px; width: 100%; margin: 0 auto;
+  padding-left: max(18px, env(safe-area-inset-left, 0px));
+  padding-right: max(18px, env(safe-area-inset-right, 0px));
+  padding-block: 18px 0;
+}
+nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: relative; z-index: 5; }
+.brand { display: flex; align-items: center; gap: 10px; font: 900 22px/1 var(--f-display); letter-spacing: -0.03em; }
+.brand svg { display: block; }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-body); padding: 13px 20px; border-radius: 999px; text-decoration: none; cursor: pointer; color: rgb(var(--fg-rgb)); background: transparent; border: 1.5px solid rgba(var(--fg-rgb), .5); transition: background .3s, color .5s, border-color .5s, transform .2s; }
+.btn:hover { background: rgba(var(--fg-rgb), .14); }
+.btn.solid { background: rgb(var(--fg-rgb)); border-color: rgb(var(--fg-rgb)); color: var(--bg1); }
+.btn.solid:hover { transform: translateY(-2px); background: rgb(var(--fg-rgb)); }
+.btn:focus-visible, .chip:focus-visible { outline: 2.5px solid rgb(var(--fg-rgb)); outline-offset: 3px; }
+
+/* ---------- stage ---------- */
+.stage { position: relative; display: grid; place-items: center; min-width: 0; touch-action: pan-y; cursor: grab; user-select: none; -webkit-user-select: none; }
+.stage:active { cursor: grabbing; }
+.giant { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-52%); text-align: center; white-space: nowrap; pointer-events: none; font: 900 clamp(84px, 16vw, 300px)/0.9 var(--f-display); letter-spacing: -0.045em; text-transform: uppercase; color: rgba(var(--fg-rgb), .13); -webkit-text-stroke: 2px rgba(var(--fg-rgb), .42); transition: color .5s, -webkit-text-stroke-color .5s; }
+.giant span { display: inline-block; }
+.giant .gap { width: .22em; }
+
+.tag { position: absolute; z-index: 3; display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 999px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; background: rgba(var(--fg-rgb), .12); border: 1px solid rgba(var(--fg-rgb), .32); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); animation: drift 6s ease-in-out infinite; transition: color .5s, background .5s, border-color .5s; }
+.tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--fg-rgb)); transition: background .5s; }
+.t1 { left: calc(50% - 400px); top: 20%; }
+.t2 { right: calc(50% - 410px); top: 46%; animation-delay: -2s; }
+.t3 { left: calc(50% - 360px); top: 74%; animation-delay: -4s; }
+@keyframes drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+.scene { position: relative; width: 250px; height: 514px; perspective: 1500px; transform: scale(var(--ps, 1)); z-index: 2; }
+.rise, .float, .phone { transform-style: preserve-3d; width: 100%; height: 100%; }
+.rise { animation: rise 1.3s cubic-bezier(.2,.8,.2,1) 1.7s both; }
+.float { animation: bob 5.5s ease-in-out infinite; }
+.phone { position: relative; will-change: transform; --ga: 125deg; }
+.photo { position: absolute; left: 50%; top: 0; width: 440px; height: 514px; margin-left: -220px; object-fit: contain; display: none; pointer-events: none; filter: drop-shadow(0 28px 28px rgba(0,0,0,.35)); will-change: transform; }
+@keyframes rise { from { transform: translateY(120vh); } to { transform: none; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+
+.layer, .face, .sbtn { position: absolute; }
+.layer { inset: 0; border-radius: 52px; background: linear-gradient(135deg, var(--frame-hi, #999) 0%, var(--frame, #555) 42%, var(--frame-lo, #333) 100%); }
+.sbtn { width: 6px; border-radius: 3px; background: linear-gradient(90deg, var(--frame-hi, #999), var(--frame, #555)); }
+.face { inset: 0; border-radius: 52px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.front { background: #000; overflow: hidden; box-shadow: inset 0 0 0 3px var(--frame-hi, #999), inset 0 0 0 4px rgba(0,0,0,.6); }
+.screen { position: absolute; inset: 9px; border-radius: 43px; overflow: hidden; color: #fff;
+  background:
+    radial-gradient(100% 60% at 88% 6%, var(--hi, #fff) 0%, transparent 62%),
+    radial-gradient(90% 55% at 4% 94%, var(--accent2, #fff) 0%, transparent 62%),
+    linear-gradient(170deg, var(--body, #444), var(--body2, #111)); }
+.screen::after, .back::after { content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; background: linear-gradient(var(--ga), transparent 28%, rgba(255,255,255,.2) 46%, transparent 62%); }
+.island { position: absolute; top: 12px; left: 50%; width: 88px; height: 26px; margin-left: -44px; border-radius: 20px; background: #000; z-index: 3; }
+.island::after { content: ""; position: absolute; right: 9px; top: 8px; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #26304f, #05060a 70%); }
+.status { position: absolute; top: 15px; left: 22px; right: 22px; display: flex; justify-content: space-between; align-items: center; font: 600 11px/1 var(--f-body); z-index: 2; }
+.batt { width: 24px; height: 11px; border-radius: 4px; border: 1.5px solid rgba(255,255,255,.7); position: relative; }
+.batt::before { content: ""; position: absolute; inset: 1.5px; right: 5px; border-radius: 2px; background: #fff; }
+.lock { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; padding-top: 70px; text-align: center; }
+.lock .date { font: 500 14px/1 var(--f-body); opacity: .9; }
+.lock .time { font: 800 74px/1 var(--f-display); letter-spacing: -0.05em; margin-top: 6px; font-variant-numeric: tabular-nums; text-shadow: 0 2px 20px rgba(0,0,0,.15); }
+.notif { position: absolute; left: 16px; right: 16px; bottom: 96px; display: flex; gap: 10px; align-items: center; padding: 11px 12px; text-align: left; border-radius: 20px; background: rgba(255,255,255,.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.22); }
+.notif i { flex: none; width: 30px; height: 30px; border-radius: 8px; background: #fff; position: relative; }
+.notif i::after { content: ""; position: absolute; left: 11px; top: 7px; width: 8px; height: 16px; border-radius: 3px; background: #111; }
+.notif b { display: block; font: 600 12px/1.2 var(--f-body); }
+.notif small { display: block; font: 400 11px/1.3 var(--f-body); opacity: .85; }
+.lock .btns { position: absolute; bottom: 36px; left: 28px; right: 28px; display: flex; justify-content: space-between; }
+.lock .btns i { width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.32); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.lock .home { position: absolute; bottom: 10px; left: 50%; width: 100px; height: 5px; margin-left: -50px; border-radius: 5px; background: rgba(255,255,255,.75); }
+
+.back { transform-style: preserve-3d; background: linear-gradient(150deg, var(--hi, #888) -20%, var(--body, #444) 38%, var(--body2, #222) 110%); box-shadow: inset 0 0 0 2px rgba(255,255,255,.08); }
+.back * { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.back .mark { position: absolute; left: 0; right: 0; bottom: 132px; text-align: center; font: 500 9px/1 var(--f-mono); letter-spacing: .34em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+.mod { position: absolute; transform: translateZ(5px); background: linear-gradient(145deg, rgba(255,255,255,.2), rgba(0,0,0,.2)); border: 1px solid rgba(255,255,255,.3); box-shadow: 0 2px 0 rgba(0,0,0,.25), 0 8px 16px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4); }
+.mod.sq { top: 16px; left: 16px; width: 102px; height: 102px; border-radius: 28px; }
+.mod.bar { top: 22px; left: 8px; right: 8px; border-radius: 22px; }
+.lens { position: absolute; width: 42px; height: 42px; border-radius: 50%; background: conic-gradient(from 210deg, #f5f5f5, #6d6d6d 18%, #e9e9e9 36%, #5b5b5b 55%, #f2f2f2 75%, #777 90%, #f5f5f5); box-shadow: 0 3px 6px rgba(0,0,0,.4); }
+.lens::before { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #8397cc 0 5%, #232b40 22%, #06080d 64%); box-shadow: inset 0 0 0 2px #0a0c12; }
+.lens::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #34437a, #05060a 72%); }
+.fl { position: absolute; width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fff8e0, #cdbd8c 72%); box-shadow: 0 0 0 2px rgba(0,0,0,.25); }
+.dot { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,.5); }
+.shadow { position: absolute; left: 50%; bottom: -34px; width: 230px; height: 34px; margin-left: -115px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.5), transparent); filter: blur(5px); animation: shade 5.5s ease-in-out infinite; }
+@keyframes shade { 0%, 100% { transform: scale(1); opacity: .9; } 50% { transform: scale(.8); opacity: .55; } }
+
+/* ---------- bottom bar ---------- */
+.bottom { position: relative; z-index: 5; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: end; padding-block: 8px 30px; }
+.reveal { animation: up .9s cubic-bezier(.2,.7,.2,1) both; animation-delay: var(--d, 2s); }
+@keyframes up { from { transform: translateY(32px); opacity: 0; } to { transform: none; opacity: 1; } }
+.eyebrow { font: 500 12px/1.4 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
+h1 { margin: 10px 0 18px; font: 900 clamp(32px, 4.2vw, 58px)/0.98 var(--f-display); letter-spacing: -0.035em; text-wrap: balance; max-width: 14ch; }
+.cta { display: flex; flex-wrap: wrap; gap: 10px; }
+.now { display: flex; align-items: baseline; gap: 14px; margin-bottom: 12px; }
+.now span { font: 500 12px/1 var(--f-mono); letter-spacing: .14em; opacity: .8; font-variant-numeric: tabular-nums; }
+.now strong { font: 800 22px/1 var(--f-display); letter-spacing: -0.02em; }
+.rail { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; display: flex; align-items: center; gap: 9px; padding: 11px 15px; border-radius: 999px; overflow: hidden; border: 1.5px solid rgba(var(--fg-rgb), .35); background: rgba(var(--fg-rgb), .08); color: rgb(var(--fg-rgb)); font: 600 13px/1 var(--f-body); cursor: pointer; white-space: nowrap; transition: background .4s, color .5s, border-color .5s; }
+.chip:hover { background: rgba(var(--fg-rgb), .2); }
+.chip .sw { width: 13px; height: 13px; border-radius: 50%; background: var(--c); box-shadow: 0 0 0 1.5px rgba(255,255,255,.55); }
+.chip[aria-selected="true"] { background: rgb(var(--fg-rgb)); border-color: rgb(var(--fg-rgb)); color: var(--bg1); }
+.chip .bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--bg1); opacity: .55; }
+
+@media (max-width: 1000px) { .tag { display: none; } }
+@media (max-width: 760px) {
+  .bottom { grid-template-columns: minmax(0, 1fr); gap: 20px; padding-bottom: 24px; }
+  h1 { max-width: none; }
+  .rail { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+  .rail::-webkit-scrollbar { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+  .rise, .float, .shadow, .tag, .reveal { animation: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="intro" aria-hidden="true" id="intro"></div>
+
+<header class="hero" id="hero">
+  <div class="bgA" id="bgA"></div>
+  <div class="bgB" id="bgB"></div>
+  <div class="inner">
+    <nav>
+      <div class="brand">
+        <svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="10" y="6" width="10" height="18" rx="3" fill="currentColor"/></svg>
+        Gadget Hub
+      </div>
+      <a class="btn" href="models.html">See all phones</a>
+    </nav>
+
+    <div class="stage" id="stage">
+      <div class="giant" id="giant" aria-hidden="true"></div>
+      <div class="tag t1">IMEI checked</div>
+      <div class="tag t2">Battery health tested</div>
+      <div class="tag t3">Display inspected</div>
+      <div class="scene" id="scene">
+        <div class="rise"><div class="float"><div class="phone" id="phone"></div><img class="photo" id="photo" alt=""></div></div>
+        <div class="shadow"></div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="copy">
+        <div class="eyebrow reveal" style="--d:2.1s">Second hand iPhones</div>
+        <h1 class="reveal" style="--d:2.2s">Used iPhones, properly checked.</h1>
+        <div class="cta reveal" style="--d:2.35s">
+          <a class="btn solid" href="models.html">See all models</a>
+        </div>
+      </div>
+      <div class="pick reveal" style="--d:2.45s">
+        <div class="now"><span id="idx">01 / 07</span><strong id="name">iPhone 14 Pro Max</strong></div>
+        <div class="rail" id="phones" role="tablist" aria-label="iPhone models"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+(function () {
+  var MODELS = [
+    { name: "iPhone 17",         big: "17",         body: "#93a98d", body2: "#566d52", hi: "#bad0b3", a2: "#c4e8b2", frame: "#7f9679", fhi: "#c4d8be", flo: "#46583f", bg1: "#c9dfbe", bg2: "#6a8a63", fg: "12,28,12",    cam: "bar2" },
+    { name: "iPhone 14 Pro Max", big: "14 Pro Max", body: "#51407a", body2: "#261c42", hi: "#8c78c4", a2: "#c7a8ff", frame: "#3d3552", fhi: "#9a8fb8", flo: "#231e33", bg1: "#4a3a78", bg2: "#150f2a", fg: "255,255,255", cam: "tri" },
+    { name: "iPhone 15",         big: "15",         body: "#e8c3cb", body2: "#c58c9a", hi: "#fbe3e8", a2: "#ffb3c4", frame: "#d6aab4", fhi: "#f8dde3", flo: "#a8707e", bg1: "#f3a9bb", bg2: "#b9506e", fg: "40,8,20",     cam: "dual" },
+    { name: "iPhone 15 Pro Max", big: "15 Pro Max", body: "#8f8c86", body2: "#5a5853", hi: "#bdbab3", a2: "#e8e2d2", frame: "#77746e", fhi: "#d6d2ca", flo: "#4a4843", bg1: "#d8d3c8", bg2: "#8a857a", fg: "18,16,12",    cam: "tri" },
+    { name: "iPhone 16 Pro",     big: "16 Pro",     body: "#b89c84", body2: "#7f6652", hi: "#dcc2a8", a2: "#ffd2a0", frame: "#a38870", fhi: "#e6d0b8", flo: "#6d5645", bg1: "#e9cfae", bg2: "#9b7550", fg: "30,18,8",     cam: "tri" },
+    { name: "iPhone 17 Pro Max", big: "17 Pro Max", body: "#d2692f", body2: "#8e3a14", hi: "#f59a63", a2: "#ffa070", frame: "#b9582a", fhi: "#f4aa7c", flo: "#7a3213", bg1: "#ff9a5c", bg2: "#d1561f", fg: "26,8,0",      cam: "plateau" },
+    { name: "iPhone 18 Pro Max", big: "18 Pro Max", body: "#6d1f35", body2: "#2e0b16", hi: "#a64461", a2: "#ff8aa8", frame: "#5a1a2c", fhi: "#b5707f", flo: "#2a0a13", bg1: "#8a2442", bg2: "#2a0812", fg: "255,255,255", cam: "plateau" }
+  ];
+  var DUR = 3000, SPIN = 1400;
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+  var root = document.documentElement;
+  var phone = $("phone"), stage = $("stage"), scene = $("scene"), giant = $("giant"), rail = $("phones");
+  var bgA = $("bgA"), bgB = $("bgB");
+
+  /* intro word */
+  var iw = "GADGET HUB", ih = "";
+  for (var k = 0; k < iw.length; k++) ih += iw[k] === " " ? '<span class="sp"></span>' : '<span style="--i:' + k + '">' + iw[k] + "</span>";
+  $("intro").innerHTML = ih;
+
+  /* ---- build the 3D phone ---- */
+  var D = 26, N = 15, html = "";
+  for (var i = 0; i < N; i++) {
+    var z = -D / 2 + (D * i) / (N - 1);
+    var b = 0.62 + 0.5 * (1 - Math.abs(z) / (D / 2));
+    html += '<div class="layer" style="transform:translateZ(' + z.toFixed(2) + 'px);filter:brightness(' + b.toFixed(2) + ')"></div>';
+  }
+  function btn3d(side, top, h) {
+    var s = "";
+    for (var j = -2; j <= 2; j++) s += '<div class="sbtn" style="' + (side === "l" ? "left:-5px" : "right:-5px") + ";top:" + top + "px;height:" + h + "px;transform:translateZ(" + j + 'px)"></div>';
+    return s;
+  }
+  html += btn3d("l", 120, 30) + btn3d("l", 176, 54) + btn3d("l", 240, 54) + btn3d("r", 200, 84);
+  var zf = D / 2 + 0.7;
+  html += '<div class="face back" id="back" style="transform:rotateY(180deg) translateZ(' + zf + 'px)"></div>';
+  html += '<div class="face front" style="transform:translateZ(' + zf + 'px)"><div class="screen">' +
+    '<div class="island"></div>' +
+    '<div class="status"><span>Gadget Hub</span><span class="batt"></span></div>' +
+    '<div class="lock"><div class="date" id="date"></div><div class="time" id="time"></div>' +
+    '<div class="notif"><i></i><div><b>Gadget Hub</b><small id="smodel">Checked and ready</small></div></div>' +
+    '<div class="btns"><i></i><i></i></div><div class="home"></div></div></div></div>';
+  phone.innerHTML = html;
+  var back = $("back");
+
+  function lens(x, y) { return '<i class="lens" style="left:' + x + "px;top:" + y + 'px"></i>'; }
+  function cam(t) {
+    var m = '<div class="mark">Gadget Hub</div>';
+    if (t === "tri") return m + '<div class="mod sq">' + lens(8, 6) + lens(8, 52) + lens(52, 29) + '<i class="fl" style="left:74px;top:8px"></i><i class="dot" style="left:76px;top:80px"></i></div>';
+    if (t === "dual") return m + '<div class="mod sq">' + lens(8, 8) + lens(52, 52) + '<i class="fl" style="left:74px;top:14px"></i><i class="dot" style="left:16px;top:76px"></i></div>';
+    if (t === "bar2") return m + '<div class="mod bar" style="height:92px">' + lens(26, 24) + lens(80, 24) + '<i class="fl" style="left:150px;top:30px"></i><i class="dot" style="left:176px;top:40px"></i></div>';
+    return m + '<div class="mod bar" style="height:114px">' + lens(24, 8) + lens(24, 62) + lens(76, 35) + '<i class="fl" style="left:146px;top:20px"></i><i class="dot" style="left:166px;top:74px"></i><i class="dot" style="left:196px;top:34px"></i></div>';
+  }
+
+  /* ---- live lock-screen clock ---- */
+  function tick() {
+    var d = new Date(), h = d.getHours() % 12 || 12;
+    $("time").textContent = h + ":" + ("0" + d.getMinutes()).slice(-2);
+    $("date").textContent = d.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" });
+  }
+  tick(); setInterval(tick, 20000);
+
+  /* ---- model rail ---- */
+  var chips = MODELS.map(function (m, i) {
+    var el = document.createElement("button");
+    el.className = "chip"; el.type = "button"; el.setAttribute("role", "tab");
+    el.innerHTML = '<span class="sw" style="--c:' + m.body + '"></span>' + m.name.replace("iPhone ", "") + '<span class="bar"></span>';
+    el.addEventListener("click", function () { go(i); });
+    rail.appendChild(el);
+    return el;
+  });
+
+  function bgCss(m) {
+    return "radial-gradient(42% 52% at 50% 46%, rgba(255,255,255,.3), rgba(255,255,255,0) 72%), linear-gradient(160deg," + m.bg1 + "," + m.bg2 + ")";
+  }
+  function setGiant(text, animate) {
+    var h = "";
+    for (var n = 0; n < text.length; n++) h += text[n] === " " ? '<span class="gap"></span>' : "<span>" + text[n] + "</span>";
+    giant.innerHTML = h;
+    if (!animate || reduce || !giant.animate) return;
+    var sp = giant.querySelectorAll("span:not(.gap)");
+    for (var q = 0; q < sp.length; q++) {
+      sp[q].animate([{ transform: "translateY(70%)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 700, delay: q * 45, easing: "cubic-bezier(.2,.8,.2,1)", fill: "backwards" });
+    }
+  }
+
+  var cur = -1, busy = false, pending = null, spinStart = null, elapsed = 0, held = false;
+
+  function theme(m) {
+    root.style.setProperty("--fg-rgb", m.fg); root.style.setProperty("--bg1", m.bg1);
+    root.style.setProperty("--bg2", m.bg2); root.style.setProperty("--accent", m.a2);
+  }
+  function applyContent(i, first) {
+    var m = MODELS[i]; cur = i;
+    var ps = phone.style;
+    ps.setProperty("--frame", m.frame); ps.setProperty("--frame-hi", m.fhi); ps.setProperty("--frame-lo", m.flo);
+    ps.setProperty("--body", m.body); ps.setProperty("--body2", m.body2); ps.setProperty("--hi", m.hi); ps.setProperty("--accent2", m.a2);
+    if (first || reduce || !bgB.animate) theme(m); else setTimeout(function () { theme(m); }, 450);
+    back.innerHTML = cam(m.cam);
+    $("name").textContent = m.name;
+    $("idx").textContent = ("0" + (i + 1)).slice(-2) + " / " + ("0" + MODELS.length).slice(-2);
+    $("smodel").textContent = m.name + " is checked and ready";
+    setGiant(m.big, !first);
+    refreshPhoto();
+    chips.forEach(function (c, n) { c.setAttribute("aria-selected", n === i ? "true" : "false"); c.querySelector(".bar").style.width = "0"; });
+    var c = chips[i];
+    if (rail.scrollWidth > rail.clientWidth) rail.scrollTo({ left: Math.max(0, c.offsetLeft - (rail.clientWidth - c.offsetWidth) / 2), behavior: reduce ? "auto" : "smooth" });
+  }
+
+  function go(i) {
+    i = (i + MODELS.length) % MODELS.length;
+    elapsed = 0;
+    if (i === cur) return;
+    if (busy) { pending = i; return; }
+    var m = MODELS[i];
+    if (reduce || !bgB.animate) { bgA.style.background = bgCss(m); applyContent(i); return; }
+    busy = true; spinStart = performance.now();
+    bgB.style.background = bgCss(m);
+    var wipe = bgB.animate([{ clipPath: "circle(0% at 50% 46%)" }, { clipPath: "circle(150% at 50% 46%)" }], { duration: 1000, delay: 380, easing: "cubic-bezier(.65,0,.25,1)", fill: "both" });
+    setTimeout(function () { applyContent(i); }, 0.4 * SPIN);
+    wipe.onfinish = function () { bgA.style.background = bgCss(m); wipe.cancel(); };
+  }
+
+  /* ---- real photos: put PNGs in an "images" folder, e.g. images/iphone-17.png ---- */
+  var photo = $("photo"), ok = [], photoMode = false;
+  function refreshPhoto() {
+    photoMode = !!ok[cur];
+    if (photoMode) { photo.src = MODELS[cur].src; photo.alt = MODELS[cur].name; }
+    photo.style.display = photoMode ? "block" : "none";
+    phone.style.visibility = photoMode ? "hidden" : "visible";
+  }
+  MODELS.forEach(function (m, i) {
+    m.src = "images/" + m.name.toLowerCase().replace(/ /g, "-") + ".png";
+    var im = new Image();
+    im.onload = function () { ok[i] = true; if (i === cur) refreshPhoto(); };
+    im.src = m.src;
+  });
+
+  applyContent(0, true);
+  bgA.style.background = bgCss(MODELS[0]);
+
+  /* ---- fit the phone to the stage ---- */
+  function fit() {
+    var s = Math.min(1.1, (stage.clientHeight - 36) / 514, (stage.clientWidth - 24) / 270);
+    scene.style.setProperty("--ps", Math.max(0.5, s).toFixed(3));
+  }
+  fit(); window.addEventListener("resize", fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(stage);
+
+  /* ---- animation loop ---- */
+  var t0 = performance.now(), last = t0, drag = 0, dragging = false, lastX = 0;
+  var tpx = 0, tpy = 0, cpx = 0, cpy = 0;
+  var introSpin = reduce ? null : t0 + 1750;
+  function ease(p) { return p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+  function frame(now) {
+    var dt = Math.min(64, now - last); last = now;
+    var t = (now - t0) / 1000;
+    var ry = reduce ? -16 : Math.sin(t * 0.55) * 22 - 8;
+    var rx = reduce ? 0 : Math.cos(t * 0.4) * 3;
+    cpx += (tpx - cpx) * 0.06; cpy += (tpy - cpy) * 0.06;
+    ry += cpx * 28; rx -= cpy * 12;
+
+    if (introSpin !== null && now >= introSpin) {
+      var pi = Math.min(1, (now - introSpin) / 1900);
+      ry -= 720 * (1 - ease(pi));
+      if (pi >= 1) introSpin = null;
+    } else if (introSpin !== null) { ry -= 720; }
+
+    if (spinStart !== null) {
+      var p = Math.min(1, (now - spinStart) / SPIN);
+      ry += 360 * ease(p);
+      if (p >= 1) { spinStart = null; busy = false; if (pending !== null) { var pn = pending; pending = null; go(pn); } }
+    }
+    if (!dragging) drag *= 0.93;
+    ry += drag;
+    if (photoMode) {
+      var fr = 0;
+      if (spinStart !== null) { var pp = Math.min(1, (now - spinStart) / SPIN); fr = pp < 0.4 ? 90 * Math.pow(pp / 0.4, 2) : -90 * Math.pow(1 - (pp - 0.4) / 0.6, 2); }
+      var pr = reduce ? 0 : Math.sin(t * 0.55) * 8 + cpx * 14;
+      photo.style.transform = "rotateY(" + (fr + pr + drag * 0.3).toFixed(2) + "deg) rotateX(" + (-cpy * 8).toFixed(2) + "deg)";
+    }
+
+    phone.style.transform = "rotateX(" + rx.toFixed(2) + "deg) rotateY(" + ry.toFixed(2) + "deg)";
+    phone.style.setProperty("--ga", (125 + ry * 0.7).toFixed(1) + "deg");
+
+    if (!reduce && !held && !dragging && introSpin === null && now - t0 > 3300) {
+      elapsed += dt;
+      if (elapsed >= DUR && !busy) go(cur + 1);
+    }
+    var bar = chips[cur] && chips[cur].querySelector(".bar");
+    if (bar) bar.style.width = (reduce ? 0 : Math.min(100, (elapsed / DUR) * 100)) + "%";
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* ---- pointer: tilt toward cursor, drag to spin ---- */
+  stage.addEventListener("pointerdown", function (e) { dragging = true; lastX = e.clientX; try { stage.setPointerCapture(e.pointerId); } catch (x) {} });
+  stage.addEventListener("pointermove", function (e) {
+    var r = stage.getBoundingClientRect();
+    if (e.pointerType === "mouse") { tpx = (e.clientX - r.left) / r.width - 0.5; tpy = (e.clientY - r.top) / r.height - 0.5; }
+    if (dragging) { drag += (e.clientX - lastX) * 0.7; lastX = e.clientX; }
+  });
+  function release() { dragging = false; }
+  stage.addEventListener("pointerup", release);
+  stage.addEventListener("pointercancel", release);
+  stage.addEventListener("mouseenter", function () { held = true; });
+  stage.addEventListener("mouseleave", function () { held = false; tpx = 0; tpy = 0; });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight") go(cur + 1);
+    if (e.key === "ArrowLeft") go(cur - 1);
+  });
+  document.addEventListener("visibilitychange", function () { last = performance.now(); });
+})();
+</script>
+</body>
+</html>

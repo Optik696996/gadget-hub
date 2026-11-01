@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gadget Hub, All iPhones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;800;900&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout: dark shelf. Sticky filter bar on top, then a grid of listing cards.
+   Each card's picture area is tinted with that phone's own colour so the shelf reads like the entrance page. */
+:root {
+  --ink: #07080c;
+  --panel: #10141c;
+  --panel-2: #181e2a;
+  --line: #242c3c;
+  --text: #f1f3f8;
+  --mute: #9aa4b8;
+  --ok: #5ad18a;
+  --warn: #f0b84a;
+  --f-display: "Archivo", "Arial Black", system-ui, sans-serif;
+  --f-body: "DM Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--ink); }
+body { margin: 0; background: var(--ink); color: var(--text); font: 400 16px/1.5 var(--f-body); min-height: 100vh; }
+a { color: inherit; }
+.wrap { max-width: 1240px; margin: 0 auto; padding-left: max(18px, env(safe-area-inset-left, 0px)); padding-right: max(18px, env(safe-area-inset-right, 0px)); }
+
+/* top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font: 900 22px/1 var(--f-display); letter-spacing: -0.03em; text-decoration: none; }
+.btn { display: inline-flex; align-items: center; gap: 8px; font: 600 14px/1 var(--f-body); padding: 13px 20px; border-radius: 999px; text-decoration: none; cursor: pointer; color: var(--text); background: transparent; border: 1.5px solid #3a4558; transition: background .25s, transform .2s, border-color .25s; }
+.btn:hover { background: #ffffff14; border-color: #6a778f; }
+.btn.solid { background: var(--text); border-color: var(--text); color: var(--ink); }
+.btn.solid:hover { transform: translateY(-2px); background: #fff; }
+.btn:focus-visible, .chip:focus-visible, select:focus-visible, .check:focus-within { outline: 2.5px solid #fff; outline-offset: 3px; }
+
+/* heading */
+.head { padding-block: 22px 18px; }
+.eyebrow { font: 500 12px/1.4 var(--f-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--mute); }
+h1 { margin: 10px 0 8px; font: 900 clamp(40px, 7vw, 92px)/0.95 var(--f-display); letter-spacing: -0.04em; }
+.sub { margin: 0; color: var(--mute); max-width: 56ch; }
+
+/* filters */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); border-block: 1px solid var(--line); }
+.bar .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding-block: 12px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; flex: 1 1 380px; min-width: 0; padding-block: 2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; padding: 10px 15px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--panel); color: var(--mute); font: 600 13px/1 var(--f-body); cursor: pointer; white-space: nowrap; transition: background .25s, color .25s, border-color .25s; }
+.chip:hover { color: var(--text); border-color: #3a4558; }
+.chip[aria-pressed="true"] { background: var(--text); border-color: var(--text); color: var(--ink); }
+.chip small { font: 500 11px/1 var(--f-mono); margin-left: 6px; opacity: .65; }
+.tools { display: flex; align-items: center; gap: 14px; }
+.check { display: flex; align-items: center; gap: 8px; font: 500 13px/1 var(--f-body); color: var(--mute); cursor: pointer; white-space: nowrap; }
+.check input { accent-color: #fff; width: 16px; height: 16px; margin: 0; }
+select { font: 500 13px/1 var(--f-body); color: var(--text); background: var(--panel); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+
+.meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; padding-block: 18px 14px; font: 500 12px/1.5 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+.meta b { color: var(--text); font-weight: 500; }
+
+/* grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 18px; padding-bottom: 56px; }
+.card { min-width: 0; display: flex; flex-direction: column; background: var(--panel); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; animation: up .7s cubic-bezier(.2,.7,.2,1) both; animation-delay: calc(var(--i) * 45ms); transition: transform .3s, border-color .3s; }
+.card:hover { transform: translateY(-4px); border-color: #3a4558; }
+.card.sold .photo, .card.sold .tp { filter: grayscale(.75) brightness(.7); }
+.card.sold .media { background: linear-gradient(160deg, #3b3f4a, #15171d); }
+.cross { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+.cross line { stroke: #ff3b3b; stroke-width: 7; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.stamp { position: absolute; left: 50%; top: 50%; z-index: 3; transform: translate(-50%, -50%) rotate(-14deg); padding: 4px 18px 2px; border: 4px solid #ff3b3b; border-radius: 10px; background: rgba(8,9,13,.72); color: #ff3b3b; font: 900 46px/1.1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; pointer-events: none; }
+.sold-text { font: 700 13px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: #ff5a5a; }
+.card.sold .badge.r { color: #ff8a8a; }
+@keyframes up { from { transform: translateY(26px); opacity: 0; } to { transform: none; opacity: 1; } }
+.media { position: relative; height: 262px; display: grid; place-items: center; overflow: hidden; background: radial-gradient(60% 55% at 50% 48%, rgba(255,255,255,.26), rgba(255,255,255,0) 72%), linear-gradient(160deg, var(--b1), var(--b2)); }
+.badge { position: absolute; top: 12px; font: 500 11px/1 var(--f-mono); letter-spacing: .1em; text-transform: uppercase; padding: 7px 10px; border-radius: 999px; background: rgba(0,0,0,.42); color: #fff; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.badge.l { left: 12px; }
+.badge.r { right: 12px; display: flex; align-items: center; gap: 6px; }
+.badge.r::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+.card.sold .badge.r::before { background: #ff6b6b; }
+.photo { position: relative; height: 218px; max-width: 86%; object-fit: contain; filter: drop-shadow(0 18px 18px rgba(0,0,0,.35)); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.card:hover .photo, .card:hover .tp { transform: translateY(-6px) rotate(-3deg); }
+
+/* css phone thumbnail (shown until a real photo exists in /images) */
+.tp { position: relative; width: 106px; height: 218px; border-radius: 28px; background: linear-gradient(150deg, var(--c1), var(--c2)); box-shadow: inset 0 0 0 2px rgba(255,255,255,.18), 0 20px 24px rgba(0,0,0,.38); transition: transform .5s cubic-bezier(.2,.8,.2,1); }
+.tp .m { position: absolute; background: rgba(0,0,0,.26); border: 1px solid rgba(255,255,255,.3); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+.tp .sq { top: 8px; left: 8px; width: 46px; height: 46px; border-radius: 13px; }
+.tp .bd { top: 11px; left: 4px; right: 4px; border-radius: 11px; }
+.tp .ln { position: absolute; width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #8397cc 0 6%, #232b40 26%, #06080d 66%); box-shadow: 0 0 0 2px #cfd2d8, 0 2px 3px rgba(0,0,0,.4); }
+.tp .fl { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #efe3b8; }
+.tp .mk { position: absolute; left: 0; right: 0; bottom: 56px; text-align: center; font: 500 5px/1 var(--f-mono); letter-spacing: .3em; text-transform: uppercase; color: rgba(255,255,255,.5); }
+
+.body { display: flex; flex-direction: column; gap: 12px; padding: 16px 16px 18px; flex: 1; }
+.name { margin: 0; font: 800 21px/1.1 var(--f-display); letter-spacing: -0.02em; }
+.spec { font: 500 12px/1.4 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--mute); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.stat small { display: block; font: 500 10px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-bottom: 7px; }
+.stat b { font: 700 15px/1 var(--f-body); font-variant-numeric: tabular-nums; }
+.gauge { height: 4px; border-radius: 4px; background: var(--panel-2); margin-top: 7px; overflow: hidden; }
+.gauge i { display: block; height: 100%; border-radius: 4px; background: var(--g, var(--ok)); }
+.foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 6px; }
+.price { font: 900 26px/1 var(--f-display); letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.price small { display: block; font: 500 10px/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); margin-bottom: 6px; }
+.card .btn { padding: 12px 16px; font-size: 13px; }
+.card.sold .name, .card.sold .price { color: #aab1c0; }
+.empty { grid-column: 1 / -1; text-align: center; padding: 70px 16px; color: var(--mute); border: 1.5px dashed var(--line); border-radius: 20px; }
+.empty b { display: block; font: 800 24px/1.2 var(--f-display); color: var(--text); margin-bottom: 6px; }
+[hidden] { display: none !important; }
+.note { margin: 0 0 20px; padding: 12px 14px; border-radius: 12px; background: #f0b84a1f; border: 1px solid #f0b84a66; color: #f6d38a; font-size: 13px; }
+.legend { padding-bottom: 36px; color: var(--mute); font-size: 13px; }
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .tools { width: 100%; justify-content: space-between; }
+}
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } .card:hover { transform: none; } .card:hover .photo, .card:hover .tp { transform: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="top">
+    <a class="brand" href="index.html">
+      <svg width="32" height="32" viewBox="0 0 30 30" aria-hidden="true"><rect x="1" y="1" width="28" height="28" rx="9" fill="none" stroke="currentColor" stroke-width="2.2"/><rect x="10" y="6" width="10" height="18" rx="3" fill="currentColor"/></svg>
+      Gadget Hub
+    </a>
+    <a class="btn" href="index.html">Back to home</a>
+  </div>
+
+  <div class="head">
+    <div class="eyebrow">Available now</div>
+    <h1>All iPhones</h1>
+    <p class="sub">Every phone here is second hand and checked. Pick a model, compare battery health and condition, then message us to reserve it.</p>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="wrap">
+    <div class="chips" id="chips" role="group" aria-label="Filter by model"></div>
+    <div class="tools">
+      <label class="check"><input type="checkbox" id="hideSold"> Hide sold</label>
+      <select id="sort" aria-label="Sort phones">
+        <option value="new">Newest first</option>
+        <option value="low">Price: low to high</option>
+        <option value="high">Price: high to low</option>
+        <option value="batt">Battery health</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="meta"><span id="count"></span><span>Grade A: like new &nbsp;·&nbsp; B: light marks &nbsp;·&nbsp; C: visible wear</span></div>
+  <p class="note" id="sampleNote" hidden>These are sample listings. Developers can replace them from the admin panel.</p>
+  <div class="grid" id="grid"></div>
+  <div class="legend">Prices are in rupees. Battery health is the figure shown in iPhone settings at the time of testing. &nbsp;·&nbsp; <a href="auth.html">Developer login</a></div>
+</main>
+
+<script src="inventory.js"></script>
+<script src="store.js"></script>
+<script>
+(function () {
+  /* Stock, prices and photos come from inventory.js and the developer admin panel (see admin.html) */
+  var GH = window.GH;
+  var WHATSAPP = GH.config().whatsapp;
+  var MODELS = GH.MODELS;
+  var INVENTORY = GH.getInventory();
+
+  var $ = function (id) { return document.getElementById(id); };
+  var grid = $("grid"), chipsEl = $("chips");
+  var filter = "All";
+  var photos = {};
+  var inr = new Intl.NumberFormat("en-IN");
+
+  function shade(hex, amt) {
+    var n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    function c(v) { return Math.max(0, Math.min(255, Math.round(v + (amt < 0 ? v * amt : (255 - v) * amt)))); }
+    return "#" + [c(r), c(g), c(b)].map(function (v) { return ("0" + v.toString(16)).slice(-2); }).join("");
+  }
+  function ln(x, y) { return '<i class="ln" style="left:' + x + "px;top:" + y + 'px"></i>'; }
+  function thumb(item) {
+    var t = (MODELS[item.model] || {}).cam || "tri", inner;
+    if (t === "tri") inner = '<div class="m sq">' + ln(3, 2) + ln(3, 24) + ln(24, 13) + '<i class="fl" style="left:34px;top:4px"></i></div>';
+    else if (t === "dual") inner = '<div class="m sq">' + ln(3, 3) + ln(24, 24) + '<i class="fl" style="left:34px;top:6px"></i></div>';
+    else if (t === "bar2") inner = '<div class="m bd" style="height:40px">' + ln(12, 10) + ln(38, 10) + '<i class="fl" style="left:68px;top:14px"></i></div>';
+    else inner = '<div class="m bd" style="height:50px">' + ln(10, 3) + ln(10, 28) + ln(34, 15) + '<i class="fl" style="left:64px;top:10px"></i></div>';
+    return '<div class="tp" style="--c1:' + shade(item.hex, 0.12) + ";--c2:" + shade(item.hex, -0.45) + '">' + inner + '<div class="mk">Gadget Hub</div></div>';
+  }
+  function photoSrc(model) { return "images/" + model.toLowerCase().replace(/ /g, "-") + ".png"; }
+
+  function chipLabel(name, n) { return name.replace("iPhone ", "") + "<small>" + n + "</small>"; }
+  function buildChips() {
+    var hide = $("hideSold").checked;
+    var pool = INVENTORY.filter(function (x) { return !(hide && x.sold); });
+    var names = ["All"], seen = {};
+    Object.keys(MODELS).concat(INVENTORY.map(function (x) { return x.model; })).forEach(function (m) {
+      if (!seen[m] && pool.some(function (x) { return x.model === m; })) { seen[m] = 1; names.push(m); }
+    });
+    if (names.indexOf(filter) < 0) filter = "All";
+    chipsEl.innerHTML = names.map(function (n) {
+      var cnt = n === "All" ? pool.length : pool.filter(function (x) { return x.model === n; }).length;
+      return '<button type="button" class="chip" data-m="' + n + '" aria-pressed="' + (n === filter) + '">' + (n === "All" ? "All<small>" + cnt + "</small>" : chipLabel(n, cnt)) + "</button>";
+    }).join("");
+  }
+
+  function render() {
+    var hide = $("hideSold").checked, sort = $("sort").value;
+    var list = INVENTORY.filter(function (x) { return (filter === "All" || x.model === filter) && !(hide && x.sold); });
+    if (sort === "low") list.sort(function (a, b) { return a.price - b.price; });
+    if (sort === "high") list.sort(function (a, b) { return b.price - a.price; });
+    if (sort === "batt") list.sort(function (a, b) { return b.battery - a.battery; });
+
+    var avail = list.filter(function (x) { return !x.sold; }).length;
+    $("count").innerHTML = "<b>" + avail + "</b> " + (avail === 1 ? "phone" : "phones") + " available" + (filter === "All" ? "" : " in " + filter);
+
+    if (!list.length) { grid.innerHTML = '<div class="empty"><b>No phones here right now</b>Try another model, or message us and we will look for it.</div>'; return; }
+
+    grid.innerHTML = list.map(function (x, i) {
+      var m = MODELS[x.model] || { b1: shade(x.hex, 0.2), b2: shade(x.hex, -0.55) };
+      var pic = x.photo ? '<img class="photo" src="' + x.photo + '" alt="' + x.model + '">' : photos[x.model] ? '<img class="photo" src="' + photoSrc(x.model) + '" alt="' + x.model + '">' : thumb(x);
+      var gcol = x.battery >= 90 ? "var(--ok)" : "var(--warn)";
+      var msg = "Hi Gadget Hub, I am interested in the " + x.model + " " + x.storage + " (" + x.color + ") for Rs " + inr.format(x.price) + ". Is it still available?";
+      var href = "https://wa.me/" + WHATSAPP + "?text=" + encodeURIComponent(msg);
+      return '<article class="card' + (x.sold ? " sold" : "") + '" style="--i:' + Math.min(i, 12) + '">' +
+        '<div class="media" style="--b1:' + m.b1 + ";--b2:" + m.b2 + '">' +
+          '<span class="badge l">Grade ' + x.grade + "</span>" +
+          '<span class="badge r">' + (x.sold ? "Sold" : "Available") + "</span>" + pic +
+          (x.sold ? '<svg class="cross" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><line x1="6" y1="6" x2="94" y2="94"/><line x1="94" y1="6" x2="6" y2="94"/></svg><span class="stamp">Sold</span>' : "") +
+        "</div>" +
+        '<div class="body">' +
+          '<h2 class="name">' + x.model + "</h2>" +
+          '<div class="spec">' + x.storage + " · " + x.color + "</div>" +
+          '<div class="stats">' +
+            '<div class="stat"><small>Battery health</small><b>' + x.battery + '%</b><div class="gauge"><i style="width:' + x.battery + "%;--g:" + gcol + '"></i></div></div>' +
+            '<div class="stat"><small>Condition</small><b>' + (x.grade === "A" ? "Like new" : x.grade === "B" ? "Light marks" : "Visible wear") + "</b></div>" +
+          "</div>" +
+          '<div class="foot"><div class="price"><small>Price</small>₹' + inr.format(x.price) + "</div>" +
+          (x.sold ? '<span class="sold-text">Sold out</span>' : '<a class="btn solid" href="' + href + '" target="_blank" rel="noopener">Enquire</a>') + "</div>" +
+        "</div></article>";
+    }).join("");
+  }
+
+  chipsEl.addEventListener("click", function (e) {
+    var b = e.target.closest(".chip"); if (!b) return;
+    filter = b.getAttribute("data-m"); buildChips(); render();
+  });
+  $("sort").addEventListener("change", render);
+  $("hideSold").addEventListener("change", function () { buildChips(); render(); });
+
+  $("sampleNote").hidden = !GH.isSample();
+  buildChips(); render();
+
+  /* use real photos from the images folder when they exist */
+  Object.keys(MODELS).forEach(function (name) {
+    var im = new Image();
+    im.onload = function () { photos[name] = true; render(); };
+    im.src = photoSrc(name);
+  });
+})();
+</script>
+</body>
+</html>
